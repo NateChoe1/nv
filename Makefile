@@ -7,7 +7,7 @@ CFLAGS += $(shell ncurses6-config --cflags)
 INSTALLDIR := /usr/bin
 OUT = nv
 
-OUT: $(OBJ)
+build/$(OUT): $(OBJ)
 	$(CC) $(OBJ) -o build/$(OUT) $(LIBS)
 
 work/%.o: src/%.c

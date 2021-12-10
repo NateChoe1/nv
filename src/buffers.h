@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 #define INITIAL_ALLOCATED_LINES 100
 #define INITIAL_ALLOCATED_LINE_LEN 100
@@ -37,6 +36,9 @@ typedef struct {
 	//height of the terminal, not the actual amount of rows displayed
 	int displayed;
 	//number of displayed rows
+	
+	char *path;
+	//filename
 } Buffer;
 /*
  * NOTE:
@@ -57,3 +59,8 @@ Line *appendLine(Buffer *buff);
 void deleteCurrentLine(Buffer *buff);
 
 int insertChar(Line *line, int pos, char c);
+
+int splitLine(Buffer *buff);
+void deleteChar(Line *line, int pos);
+void writeBuffer(Buffer *buff);
+void freeBuffer(Buffer *buff);

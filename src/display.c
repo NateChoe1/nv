@@ -1,7 +1,22 @@
+#include <ctype.h>
 #include <curses.h>
 
 #include "buffers.h"
 #include "display.h"
+
+int shouldEscape(char c) {
+	if (!isprint(c))
+		return 1;
+	if (c == '\n' || c == '\r')
+		return 1;
+	return 0;
+}
+
+void printEscape(char c) {
+	char escaped[5];
+	snprintf(escaped, 5, "\\x%02x", c);
+	addnstr(escaped, 4);
+}
 
 void redrawBuffer(Buffer *buff, char *message) {
 	clear();
@@ -30,8 +45,14 @@ void redrawBuffer(Buffer *buff, char *message) {
 					} while (x % 8 != 0);
 					break;
 				default:
-					addch(line->data[i]);
-					x++;
+					if (shouldEscape(line->data[i])) {
+						x += 4;
+						printEscape(line->data[i]);
+					}
+					else {
+						addch(line->data[i]);
+						x++;
+					}
 			}
 			if (x / COLS + 1 >= LINES)
 				break;

@@ -172,6 +172,8 @@ Line *appendLine(Buffer *buff) {
 //TODO: This function sucks, make it better.
 
 void deleteCurrentLine(Buffer *buff) {
+	Line *currentLine = getCurrentLine(buff);
+	free(currentLine->data);
 	buff->lines--;
 }
 
@@ -192,4 +194,53 @@ int insertChar(Line *line, int pos, char c) {
 	line->data[pos] = c;
 	line->len++;
 	return 0;
+}
+
+int splitLine(Buffer *buff) {
+	appendLine(buff);
+	Line *prev = getLine(buff->cursorLine - 1, buff);
+	Line *curr = getCurrentLine(buff);
+	int split = MIN(buff->cursorPos, prev->len);
+	int newlen = prev->len - split;
+	if (newlen > curr->allocatedLen) {
+		int newlyAllocated = curr->allocatedLen;
+		while (newlyAllocated < newlen)
+			newlyAllocated *= 2;
+		char *newdata = realloc(curr->data,
+		                        newlyAllocated * sizeof(char));
+		if (newdata == NULL)
+			return 1;
+		curr->data = newdata;
+		curr->allocatedLen = newlyAllocated;
+	}
+	memcpy(curr->data, prev->data + split, newlen * sizeof(char));
+	prev->len = split;
+	curr->len = newlen;
+	buff->cursorPos = 0;
+	return 1;
+}
+
+void deleteChar(Line *line, int pos) {
+	if (pos >= line->len)
+		return;
+	if (pos < 0)
+		return;
+	line->len--;
+	memmove(line->data + pos, line->data + pos + 1, line->len - pos);
+}
+
+void writeBuffer(Buffer *buff) {
+	FILE *file = fopen(buff->path, "w");
+	for (int i = 0; i < buff->lines; i++) {
+		Line *line = getLine(i, buff);
+		fwrite(line->data, sizeof(char), line->len, file);
+		fputc('\n', file);
+	}
+}
+
+void freeBuffer(Buffer *buff) {
+	for (int i = 0; i < buff->lines; i++)
+		free(getLine(i, buff)->data);
+	free(buff->startLines);
+	free(buff->endLines);
 }
