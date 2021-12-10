@@ -1,10 +1,11 @@
 SRC = $(shell find -name "*.c")
 OBJ = $(shell echo $(SRC) | sed "s/src/work/g" | sed "s/\.c/.o/g")
 LIBS = $(shell ncurses6-config --libs)
-CFLAGS := -Wall -Wpedantic -Werror
+CC := gcc
+CFLAGS := -O2 -Wall -Wpedantic -Werror
 CFLAGS += $(shell ncurses6-config --cflags)
 INSTALLDIR := /usr/bin
-OUT=nv
+OUT = nv
 
 OUT: $(OBJ)
 	$(CC) $(OBJ) -o build/$(OUT) $(LIBS)

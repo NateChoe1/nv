@@ -46,6 +46,14 @@ typedef struct {
  */
 
 int readFile(FILE *file, Buffer *ret);
-Line *getLine(int pos, Buffer buff);
-Line *getCurrentLine(Buffer buff);
-void gotoLine(int pos, Buffer *buff);
+Line *getLine(int pos, Buffer *buff);
+Line *getCurrentLine(Buffer *buff);
+void gotoLine(Buffer *buff, int pos);
+
+Line *insertLine(Buffer *buff);
+Line *appendLine(Buffer *buff);
+//insertLine inserts before the cursor, appendLine inserts after, the cursor is
+//moved to the newly created line.
+void deleteCurrentLine(Buffer *buff);
+
+int insertChar(Line *line, int pos, char c);

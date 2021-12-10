@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdarg.h>
 
+#define MIN(a, b) ((a < b) ? a:b)
+
 #include "buffers.h"
 
 int readFile(FILE *file, Buffer *ret) {
@@ -76,24 +78,14 @@ startError:
 	return 1;
 }
 
-Line *getLine(int pos, Buffer buff) {
-	if (pos < buff.cursorLine)
-		return buff.startLines + pos;
-	return buff.endLines + (buff.endAlloc - (buff.lines - pos));
+Line *getLine(int pos, Buffer *buff) {
+	if (pos < buff->cursorLine)
+		return buff->startLines + pos;
+	return buff->endLines + (buff->endAlloc - (buff->lines - pos));
 }
 
-Line *getCurrentLine(Buffer buff) {
-	return buff.endLines + (buff.endAlloc - (buff.lines - buff.cursorLine));
-}
-
-Line *insertLine(Buffer buff) {
-//returns the newly created line
-	buff.lines++;
-	Line *line = getCurrentLine(buff);
-	line->len = 0;
-	line->allocatedLen = INITIAL_ALLOCATED_LINE_LEN;
-	line->data = malloc(sizeof(char) * line->allocatedLen);
-	return line;
+Line *getCurrentLine(Buffer *buff) {
+	return buff->endLines + (buff->endAlloc - (buff->lines - buff->cursorLine));
 }
 
 int reallocStart(Buffer *buff, int newlyAllocated) {
@@ -119,7 +111,7 @@ int reallocEnd(Buffer *buff, int newlyAllocated) {
 	return 0;
 }
 
-void gotoLine(int pos, Buffer *buff) {
+void gotoLine(Buffer *buff, int pos) {
 	if (pos < 0 || pos >= buff->lines || pos == buff->cursorLine)
 		return;
 	if (pos < buff->cursorLine) {
@@ -148,4 +140,56 @@ void gotoLine(int pos, Buffer *buff) {
 		       (pos - buff->cursorLine) * sizeof(Line));
 	}
 	buff->cursorLine = pos;
+}
+
+Line *insertLine(Buffer *buff) {
+	while (buff->lines - buff->cursorLine + 1 >= buff->endAlloc)
+		reallocEnd(buff, buff->endAlloc *= 2);
+	buff->lines++;
+	Line *line = getCurrentLine(buff);
+	line->len = 0;
+	line->allocatedLen = INITIAL_ALLOCATED_LINE_LEN;
+	line->data = malloc(sizeof(char) * line->allocatedLen);
+	return line;
+}
+
+Line *appendLine(Buffer *buff) {
+	while (buff->lines - buff->cursorLine + 1 >= buff->endAlloc)
+		reallocEnd(buff, buff->endAlloc *= 2);
+	Line *oldCursor = getCurrentLine(buff);
+	buff->lines++;
+	Line *line = getCurrentLine(buff);
+	line->len = 0;
+	line->allocatedLen = INITIAL_ALLOCATED_LINE_LEN;
+	line->data = malloc(sizeof(char) * line->allocatedLen);
+	Line backup;
+	memcpy(&backup, line, sizeof(Line));
+	memcpy(line, oldCursor, sizeof(Line));
+	memcpy(oldCursor, &backup, sizeof(Line));
+	gotoLine(buff, buff->cursorLine + 1);
+	return line;
+}
+//TODO: This function sucks, make it better.
+
+void deleteCurrentLine(Buffer *buff) {
+	buff->lines--;
+}
+
+int insertChar(Line *line, int pos, char c) {
+	pos = MIN(line->len, pos);
+	if (line->allocatedLen < line->len + 1) {
+		int newlyAllocated = line->allocatedLen;
+		while (newlyAllocated < line->len + 1)
+			line->len *= 2;
+		char *newdata = realloc(line->data,
+		                        sizeof(char) * newlyAllocated);
+		if (newdata == NULL)
+			return 1;
+		line->allocatedLen = newlyAllocated;
+		line->data = newdata;
+	}
+	memmove(line->data + pos + 1, line->data + pos, line->len - pos);
+	line->data[pos] = c;
+	line->len++;
+	return 0;
 }
