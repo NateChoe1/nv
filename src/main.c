@@ -114,13 +114,11 @@ char *modeString(int mode) {
 
 void edit(char *path) {
 	FILE *file = fopen(path, "r");
-	if (file == NULL)
-		return;
 	Buffer *buff = __builtin_alloca(sizeof(Buffer));
-	//NOTE: This one line means that this code only works on gcc.
 	if (readFile(file, buff))
 		return;
-	fclose(file);
+	if (file != NULL)
+		fclose(file);
 	buff->path = path;
 	int mode = NORMAL;
 	for (;;) {

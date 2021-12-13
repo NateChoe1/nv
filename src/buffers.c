@@ -7,8 +7,52 @@
 
 #include "buffers.h"
 
+int isEOF(FILE *file) {
+	int c = fgetc(file);
+	if (c == EOF)
+		return 1;
+	ungetc(c, file);
+	return 0;
+}
+
+int createEmptyLine(Line *ret) {
+	ret->len = 0;
+	ret->allocatedLen = INITIAL_ALLOCATED_LINE_LEN;
+	ret->data = malloc(sizeof(char) * ret->allocatedLen);
+	if (ret->data == NULL)
+		return 1;
+	return 0;
+}
+
+int createEmptyBuffer(Buffer *ret) {
+	ret->scrollLine = 0;
+	ret->cursorLine = 0;
+	ret->cursorPos = 0;
+	ret->startAlloc = INITIAL_ALLOCATED_LINES;
+	ret->startLines	= malloc(sizeof(Line) * ret->startAlloc);
+	if (ret->startLines == NULL)
+		goto error3;
+	ret->endAlloc = INITIAL_ALLOCATED_LINES;
+	ret->endLines = malloc(sizeof(Line) * ret->endAlloc);
+	if (ret->endLines == NULL)
+		goto error2;
+	ret->lines = 1;
+	Line *current = getCurrentLine(ret);
+	if (createEmptyLine(current))
+		goto error1;
+	return 0;
+error1:
+	free(ret->endLines);
+error2:
+	free(ret->startLines);
+error3:
+	return 1;
+}
+
 int readFile(FILE *file, Buffer *ret) {
 //returns 1 on error
+	if (file == NULL || isEOF(file))
+		return createEmptyBuffer(ret);
 	ret->scrollLine = 0;
 	ret->cursorLine = 0;
 	ret->cursorPos = 0;
@@ -24,10 +68,8 @@ int readFile(FILE *file, Buffer *ret) {
 	if (content == NULL)
 		goto startError;
 	for (;;) {
-		int eofchar = fgetc(file);
-		if (eofchar == EOF)
+		if (isEOF(file))
 			break;
-		ungetc(eofchar, file);
 
 		int len = 0;
 		int allocatedLen = INITIAL_ALLOCATED_LINE_LEN;
@@ -147,9 +189,10 @@ Line *insertLine(Buffer *buff) {
 		reallocEnd(buff, buff->endAlloc *= 2);
 	buff->lines++;
 	Line *line = getCurrentLine(buff);
-	line->len = 0;
-	line->allocatedLen = INITIAL_ALLOCATED_LINE_LEN;
-	line->data = malloc(sizeof(char) * line->allocatedLen);
+	if (createEmptyLine(line)) {
+		buff->lines--;
+		return NULL;
+	}
 	return line;
 }
 
@@ -159,9 +202,10 @@ Line *appendLine(Buffer *buff) {
 	Line *oldCursor = getCurrentLine(buff);
 	buff->lines++;
 	Line *line = getCurrentLine(buff);
-	line->len = 0;
-	line->allocatedLen = INITIAL_ALLOCATED_LINE_LEN;
-	line->data = malloc(sizeof(char) * line->allocatedLen);
+	if (createEmptyLine(line)) {
+		buff->lines--;
+		return NULL;
+	}
 	Line backup;
 	memcpy(&backup, line, sizeof(Line));
 	memcpy(line, oldCursor, sizeof(Line));
