@@ -171,18 +171,29 @@ Line *appendLine(Buffer *buff) {
 }
 //TODO: This function sucks, make it better.
 
-void deleteCurrentLine(Buffer *buff) {
+void freeLine(Line *line) {
+	free(line->data);
+}
+
+static Line *fakeDeleteCurrentLine(Buffer *buff) {
+//Deletes a line from the buffer, doesn't free it, and returns it. The line may
+//get overwritten by another line if you call gotoLine, so either copy the line
+//before using it, or just don't call gotoLine.
 	Line *currentLine = getCurrentLine(buff);
-	free(currentLine->data);
 	buff->lines--;
+	return currentLine;
+}
+
+void deleteCurrentLine(Buffer *buff) {
+	freeLine(fakeDeleteCurrentLine(buff));
 }
 
 int insertChar(Line *line, int pos, char c) {
 	pos = MIN(line->len, pos);
-	if (line->allocatedLen < line->len + 1) {
+	if (line->allocatedLen <= line->len + 1) {
 		int newlyAllocated = line->allocatedLen;
-		while (newlyAllocated < line->len + 1)
-			line->len *= 2;
+		while (newlyAllocated <= line->len + 1)
+			newlyAllocated *= 2;
 		char *newdata = realloc(line->data,
 		                        sizeof(char) * newlyAllocated);
 		if (newdata == NULL)
@@ -220,13 +231,43 @@ int splitLine(Buffer *buff) {
 	return 1;
 }
 
-void deleteChar(Line *line, int pos) {
-	if (pos >= line->len)
-		return;
+void deleteLineChar(Line *line, int pos) {
 	if (pos < 0)
 		return;
 	line->len--;
+	if (pos > line->len)
+		pos = line->len;
 	memmove(line->data + pos, line->data + pos + 1, line->len - pos);
+}
+
+void deleteChar(Buffer *buff) {
+	if (buff->cursorPos > 0) {
+		deleteLineChar(getCurrentLine(buff), --buff->cursorPos);
+	}
+	else if (buff->cursorLine > 0) {
+		Line *deleted = fakeDeleteCurrentLine(buff);
+		Line *append = __builtin_alloca(sizeof(Line));
+		memcpy(append, deleted, sizeof(Line));
+		gotoLine(buff, buff->cursorLine - 1);
+
+		Line *current = getCurrentLine(buff);
+		buff->cursorPos = current->len;
+		if (current->len + append->len > current->allocatedLen) {
+			int newlyAllocated = current->allocatedLen;
+			while (current->len + append->len < newlyAllocated)
+				newlyAllocated *= 2;
+			char *newdata = realloc(current->data,
+			                newlyAllocated * sizeof(char));
+			if (newdata == NULL) {
+				freeLine(append);
+				return;
+			}
+			current->data = newdata;
+		}
+		memcpy(current->data + current->len, append->data, append->len);
+		current->len += append->len;
+		freeLine(append);
+	}
 }
 
 void writeBuffer(Buffer *buff) {

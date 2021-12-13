@@ -49,7 +49,7 @@ int normalCommand(Buffer *buff, int control, int *mode) {
 			gotoLine(buff, buff->lines - 1);
 			break;
 		case 'x':
-			deleteChar(currentLine, buff->cursorPos);
+			deleteLineChar(currentLine, buff->cursorPos);
 			break;
 		case 'B':
 			freeBuffer(buff);
@@ -91,10 +91,7 @@ int insertCommand(Buffer *buff, int control, int *mode) {
 			gotoLine(buff, buff->cursorLine + 1);
 			break;
 		case KEY_BACKSPACE: case 0x7f:
-			if (--buff->cursorPos < 0)
-				buff->cursorPos = 0;
-			else
-				deleteChar(currentLine, buff->cursorPos);
+			deleteChar(buff);
 			break;
 		default:
 			insertChar(currentLine, buff->cursorPos, control);
