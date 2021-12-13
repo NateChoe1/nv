@@ -18,6 +18,11 @@ void printEscape(char c) {
 	addnstr(escaped, 4);
 }
 
+void updateCursor(int *curx, int *cury, int x, int y) {
+	*curx = x % COLS;
+	*cury = y + x / COLS;
+}
+
 void redrawBuffer(Buffer *buff, char *message) {
 	clear();
 	int y = 0;
@@ -29,10 +34,8 @@ void redrawBuffer(Buffer *buff, char *message) {
 		Line *line = getLine(currentLine, buff);
 		for (int i = 0; i < line->len; i++) {
 			if (currentLine == buff->cursorLine &&
-			    buff->cursorPos == i) {
-				curx = x;
-				cury = y;
-			}
+			    buff->cursorPos == i)
+				updateCursor(&curx, &cury, x, y);
 			switch (line->data[i]) {
 				case '\t':
 					do {
@@ -54,10 +57,8 @@ void redrawBuffer(Buffer *buff, char *message) {
 				break;
 		}
 		if (currentLine == buff->cursorLine &&
-		    buff->cursorPos >= line->len) {
-			curx = x;
-			cury = y;
-		}
+		    buff->cursorPos >= line->len)
+			updateCursor(&curx, &cury, x, y);
 		y += x / COLS + 1;
 		currentLine++;
 	}
