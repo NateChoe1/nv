@@ -27,11 +27,6 @@ void redrawBuffer(Buffer *buff, char *message) {
 		int x = 0;
 		move(y, x);
 		Line *line = getLine(currentLine, buff);
-		if (currentLine == buff->cursorLine &&
-		    buff->cursorPos >= line->len) {
-			curx = line->len;
-			cury = y;
-		}
 		for (int i = 0; i < line->len; i++) {
 			if (currentLine == buff->cursorLine &&
 			    buff->cursorPos == i) {
@@ -57,6 +52,11 @@ void redrawBuffer(Buffer *buff, char *message) {
 			}
 			if (x / COLS + 1 >= LINES)
 				break;
+		}
+		if (currentLine == buff->cursorLine &&
+		    buff->cursorPos >= line->len) {
+			curx = x;
+			cury = y;
 		}
 		y += x / COLS + 1;
 		currentLine++;
@@ -84,7 +84,7 @@ int lastShown(Buffer *buff) {
 	for (;;) {
 		int len = displayedLength(getLine(currentLine, buff)) / COLS;
 		shown += len / COLS + 1;
-		if (shown >= LINES - 1)
+		if (shown >= LINES - 1 || currentLine >= buff->lines)
 			break;
 		currentLine++;
 	}

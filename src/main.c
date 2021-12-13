@@ -6,6 +6,17 @@
 #include "display.h"
 #include "controls.h"
 
+void scrollBuffer(Buffer *buff) {
+	if (buff->cursorLine < buff->scrollLine)
+		buff->scrollLine = buff->cursorLine;
+	for (;;) {
+		int last = lastShown(buff);
+		if (last >= buff->cursorLine)
+			break;
+		buff->scrollLine++;
+	}
+}
+
 int normalCommand(Buffer *buff, int control, int *mode) {
 	Line *currentLine = getCurrentLine(buff);
 	switch (control) {
@@ -16,6 +27,8 @@ int normalCommand(Buffer *buff, int control, int *mode) {
 			gotoLine(buff, buff->cursorLine - 1);
 			break;
 		case 'h':
+			if (buff->cursorPos > currentLine->len)
+				buff->cursorPos = currentLine->len;
 			if (--buff->cursorPos < 0)
 				buff->cursorPos = 0;
 			break;
@@ -65,15 +78,16 @@ int normalCommand(Buffer *buff, int control, int *mode) {
 		case 'b':
 			writeBuffer(buff);
 			break;
-	}
-	if (buff->cursorLine < buff->scrollLine)
-		buff->scrollLine = buff->cursorLine;
-	for (;;) {
-		int last = lastShown(buff);
-		if (last >= buff->cursorLine)
+		case 'o':
+			appendLine(buff);
+			*mode = INSERT;
 			break;
-		buff->scrollLine++;
+		case 'O':
+			insertLine(buff);
+			*mode = INSERT;
+			break;	
 	}
+	scrollBuffer(buff);
 scrolledToCursor:
 	return 0;
 }
@@ -83,12 +97,6 @@ int insertCommand(Buffer *buff, int control, int *mode) {
 	switch (control) {
 		case 'c' & 31: case 0x1b:
 			*mode = NORMAL;
-			break;
-		case 'a' & 31:
-			appendLine(buff);
-			break;
-		case 'i' & 31:
-			insertLine(buff);
 			break;
 		case '\n':
 			splitLine(buff);

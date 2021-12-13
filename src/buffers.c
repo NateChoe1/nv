@@ -321,6 +321,8 @@ void writeBuffer(Buffer *buff) {
 		fwrite(line->data, sizeof(char), line->len, file);
 		fputc('\n', file);
 	}
+	fflush(file);
+	fclose(file);
 }
 
 void freeBuffer(Buffer *buff) {
