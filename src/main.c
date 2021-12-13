@@ -24,11 +24,19 @@ int normalCommand(Buffer *buff, int control, int *mode) {
 				buff->cursorPos = currentLine->len;
 			break;
 		case 'e' & 31:
-			buff->scrollLine++;
-			break;
-		case 'y' & 31:
-			buff->scrollLine--;
-			break;
+			if (++buff->scrollLine >= buff->lines)
+				buff->scrollLine = buff->lines - 1;
+			if (buff->cursorLine < buff->scrollLine)
+				gotoLine(buff, buff->scrollLine);
+			goto scrolledToCursor;
+		case 'y' & 31: {
+			if (--buff->scrollLine < 0)
+				buff->scrollLine = 0;
+			int last = lastShown(buff);
+			if (buff->cursorLine > last)
+				gotoLine(buff, last);
+			goto scrolledToCursor;
+		}
 		case 'i':
 			*mode = INSERT;
 			break;
@@ -58,6 +66,15 @@ int normalCommand(Buffer *buff, int control, int *mode) {
 			writeBuffer(buff);
 			break;
 	}
+	if (buff->cursorLine < buff->scrollLine)
+		buff->scrollLine = buff->cursorLine;
+	for (;;) {
+		int last = lastShown(buff);
+		if (last >= buff->cursorLine)
+			break;
+		buff->scrollLine++;
+	}
+scrolledToCursor:
 	return 0;
 }
 

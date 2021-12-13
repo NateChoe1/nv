@@ -56,7 +56,6 @@ Line *insertLine(Buffer *buff);
 Line *appendLine(Buffer *buff);
 //insertLine inserts before the cursor, appendLine inserts after, the cursor is
 //moved to the newly created line.
-void freeLine(Line *line);
 void deleteCurrentLine(Buffer *buff);
 
 int insertChar(Line *line, int pos, char c);

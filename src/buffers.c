@@ -7,7 +7,7 @@
 
 #include "buffers.h"
 
-int isEOF(FILE *file) {
+static int isEOF(FILE *file) {
 	int c = fgetc(file);
 	if (c == EOF)
 		return 1;
@@ -15,7 +15,7 @@ int isEOF(FILE *file) {
 	return 0;
 }
 
-int createEmptyLine(Line *ret) {
+static int createEmptyLine(Line *ret) {
 	ret->len = 0;
 	ret->allocatedLen = INITIAL_ALLOCATED_LINE_LEN;
 	ret->data = malloc(sizeof(char) * ret->allocatedLen);
@@ -24,7 +24,7 @@ int createEmptyLine(Line *ret) {
 	return 0;
 }
 
-int createEmptyBuffer(Buffer *ret) {
+static int createEmptyBuffer(Buffer *ret) {
 	ret->scrollLine = 0;
 	ret->cursorLine = 0;
 	ret->cursorPos = 0;

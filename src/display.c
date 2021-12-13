@@ -33,7 +33,8 @@ void redrawBuffer(Buffer *buff, char *message) {
 			cury = y;
 		}
 		for (int i = 0; i < line->len; i++) {
-			if (currentLine == buff->cursorLine && buff->cursorPos == i) {
+			if (currentLine == buff->cursorLine &&
+			    buff->cursorPos == i) {
 				curx = x;
 				cury = y;
 			}
@@ -62,4 +63,30 @@ void redrawBuffer(Buffer *buff, char *message) {
 	}
 	mvaddstr(LINES - 1, 0, message);
 	move(cury, curx);
+}
+
+int displayedLength(Line *line) {
+	int ret = 0;
+	for (int i = 0; i < line->len; i++) {
+		if (line->data[i] == '\t')
+			ret += 8 - (ret % 8);
+		else if (shouldEscape(line->data[i]))
+			ret += 4;
+		else
+			ret++;
+	}
+	return ret;
+}
+
+int lastShown(Buffer *buff) {
+	int shown = 0;
+	int currentLine = buff->scrollLine;
+	for (;;) {
+		int len = displayedLength(getLine(currentLine, buff)) / COLS;
+		shown += len / COLS + 1;
+		if (shown >= LINES - 1)
+			break;
+		currentLine++;
+	}
+	return currentLine;
 }
