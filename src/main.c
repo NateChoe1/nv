@@ -86,6 +86,22 @@ int normalCommand(Buffer *buff, int control, int *mode) {
 			insertLine(buff);
 			*mode = INSERT;
 			break;	
+		case '}':
+			for (;;) {
+				if (currentLine->len == 0 ||
+				    buff->cursorLine >= buff->lines)
+					break;
+				gotoLine(buff, buff->cursorLine + 1);
+			}
+			break;
+		case '{':
+			for (;;) {
+				if (currentLine->len == 0 ||
+				    buff->cursorLine <= 0)
+					break;
+				gotoLine(buff, buff->cursorLine - 1);
+			}
+			break;
 	}
 	scrollBuffer(buff);
 scrolledToCursor:

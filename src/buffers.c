@@ -18,7 +18,7 @@ static int isEOF(FILE *file) {
 static int createEmptyLine(Line *ret) {
 	ret->len = 0;
 	ret->allocatedLen = INITIAL_ALLOCATED_LINE_LEN;
-	ret->data = malloc(sizeof(char) * ret->allocatedLen);
+	ret->data = malloc(ret->allocatedLen);
 	if (ret->data == NULL)
 		return 1;
 	return 0;
@@ -82,8 +82,7 @@ int readFile(FILE *file, Buffer *ret) {
 				break;
 			while (len >= allocatedLen) {
 				allocatedLen *= 2;
-				char *newdata = realloc(data,
-				               sizeof(char) * allocatedLen);
+				char *newdata = realloc(data, allocatedLen);
 				if (newdata == NULL)
 					goto error;
 				data = newdata;
@@ -238,8 +237,7 @@ int insertChar(Line *line, int pos, char c) {
 		int newlyAllocated = line->allocatedLen;
 		while (newlyAllocated <= line->len + 1)
 			newlyAllocated *= 2;
-		char *newdata = realloc(line->data,
-		                        sizeof(char) * newlyAllocated);
+		char *newdata = realloc(line->data, newlyAllocated);
 		if (newdata == NULL)
 			return 1;
 		line->allocatedLen = newlyAllocated;
@@ -261,14 +259,13 @@ int splitLine(Buffer *buff) {
 		int newlyAllocated = curr->allocatedLen;
 		while (newlyAllocated < newlen)
 			newlyAllocated *= 2;
-		char *newdata = realloc(curr->data,
-		                        newlyAllocated * sizeof(char));
+		char *newdata = realloc(curr->data, newlyAllocated);
 		if (newdata == NULL)
 			return 1;
 		curr->data = newdata;
 		curr->allocatedLen = newlyAllocated;
 	}
-	memcpy(curr->data, prev->data + split, newlen * sizeof(char));
+	memcpy(curr->data, prev->data + split, newlen);
 	prev->len = split;
 	curr->len = newlen;
 	buff->cursorPos = 0;
@@ -300,8 +297,7 @@ void deleteChar(Buffer *buff) {
 			int newlyAllocated = current->allocatedLen;
 			while (current->len + append->len < newlyAllocated)
 				newlyAllocated *= 2;
-			char *newdata = realloc(current->data,
-			                newlyAllocated * sizeof(char));
+			char *newdata = realloc(current->data, newlyAllocated);
 			if (newdata == NULL) {
 				freeLine(append);
 				return;
