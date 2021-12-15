@@ -69,7 +69,7 @@ int normalCommand(Buffer *buff, int control, int *mode) {
 		case 'G':
 			gotoLine(buff, buff->lines - 1);
 			currentLine = getCurrentLine(buff);
-			buff->cursorPos = currentLine->len - 1;
+			buff->cursorPos = currentLine->len;
 			break;
 		case 'x':
 			deleteLineChar(currentLine, buff->cursorPos);
@@ -90,18 +90,22 @@ int normalCommand(Buffer *buff, int control, int *mode) {
 			break;	
 		case '}':
 			for (;;) {
-				if (currentLine->len == 0 ||
-				    buff->cursorLine >= buff->lines)
+				if (buff->cursorLine >= buff->lines - 1)
 					break;
 				gotoLine(buff, buff->cursorLine + 1);
+				currentLine = getCurrentLine(buff);
+				if (currentLine->len == 0)
+					break;
 			}
 			break;
 		case '{':
 			for (;;) {
-				if (currentLine->len == 0 ||
-				    buff->cursorLine <= 0)
+				if (buff->cursorLine <= 0)
 					break;
 				gotoLine(buff, buff->cursorLine - 1);
+				currentLine = getCurrentLine(buff);
+				if (currentLine->len  == 0)
+					break;
 			}
 			break;
 	}
@@ -179,10 +183,10 @@ void edit(char *path) {
 					return;
 				break;
 		}
-		if (buff->cursorLine != oldLine)
-			updateCursorPos(buff);
-		else if (buff->cursorPos != oldCursor)
+		if (buff->cursorPos != oldCursor)
 			updateCursorChars(buff);
+		else if (buff->cursorLine != oldLine)
+			updateCursorPos(buff);
 	}
 }
 
