@@ -68,6 +68,8 @@ int normalCommand(Buffer *buff, int control, int *mode) {
 			break;
 		case 'G':
 			gotoLine(buff, buff->lines - 1);
+			currentLine = getCurrentLine(buff);
+			buff->cursorPos = currentLine->len - 1;
 			break;
 		case 'x':
 			deleteLineChar(currentLine, buff->cursorPos);
@@ -165,6 +167,8 @@ void edit(char *path) {
 	for (;;) {
 		redrawBuffer(buff, modeString(mode));
 		int control = getch();
+		int oldLine = buff->cursorLine;
+		int oldCursor = buff->cursorPos;
 		switch (mode) {
 			case NORMAL:
 				if (normalCommand(buff, control, &mode))
@@ -175,6 +179,10 @@ void edit(char *path) {
 					return;
 				break;
 		}
+		if (buff->cursorLine != oldLine)
+			updateCursorPos(buff);
+		else if (buff->cursorPos != oldCursor)
+			updateCursorChars(buff);
 	}
 }
 

@@ -4,6 +4,8 @@
 #include "buffers.h"
 #include "display.h"
 
+#define MIN(a, b) ((a < b)? a:b)
+
 int shouldEscape(char c) {
 	if (!isprint(c))
 		return 1;
@@ -66,16 +68,19 @@ void redrawBuffer(Buffer *buff, char *message) {
 	move(cury, curx);
 }
 
+static int charLen(char c, int currentLen) {
+	if (c == '\t')
+		return 8 - (currentLen % 8);
+	else if (shouldEscape(c))
+		return 4;
+	else
+		return 1;
+}
+
 int displayedLength(Line *line) {
 	int ret = 0;
-	for (int i = 0; i < line->len; i++) {
-		if (line->data[i] == '\t')
-			ret += 8 - (ret % 8);
-		else if (shouldEscape(line->data[i]))
-			ret += 4;
-		else
-			ret++;
-	}
+	for (int i = 0; i < line->len; i++)
+		ret += charLen(line->data[i], ret);
 	return ret;
 }
 
@@ -90,4 +95,20 @@ int lastShown(Buffer *buff) {
 		currentLine++;
 	}
 	return currentLine;
+}
+
+void updateCursorPos(Buffer *buff) {
+	int len = 0;
+	buff->cursorPos = 0;
+	Line *line = getCurrentLine(buff);
+	while (len < buff->cursorChars && buff->cursorPos < line->len)
+		len += charLen(line->data[buff->cursorPos++], len);
+}
+
+void updateCursorChars(Buffer *buff) {
+	buff->cursorChars = 0;
+	Line *line = getCurrentLine(buff);
+	for (int i = 0; i < MIN(buff->cursorPos, line->len); i++) {
+		buff->cursorChars += charLen(line->data[i], buff->cursorChars);
+	}
 }

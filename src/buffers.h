@@ -20,6 +20,8 @@ typedef struct {
 	//the line the cursor is on
 	int cursorPos;
 	//how far along that line the cursor is
+	int cursorChars;
+	//how far along that line the cursor looks
 	int lines;
 	//the number of lines in the file
 

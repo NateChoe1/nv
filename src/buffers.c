@@ -28,6 +28,7 @@ static int createEmptyBuffer(Buffer *ret) {
 	ret->scrollLine = 0;
 	ret->cursorLine = 0;
 	ret->cursorPos = 0;
+	ret->cursorChars = 0;
 	ret->startAlloc = INITIAL_ALLOCATED_LINES;
 	ret->startLines	= malloc(sizeof(Line) * ret->startAlloc);
 	if (ret->startLines == NULL)
