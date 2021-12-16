@@ -229,7 +229,8 @@ static Line *fakeDeleteCurrentLine(Buffer *buff) {
 }
 
 void deleteCurrentLine(Buffer *buff) {
-	freeLine(fakeDeleteCurrentLine(buff));
+	if (buff->lines > 1)
+		freeLine(fakeDeleteCurrentLine(buff));
 }
 
 int insertChar(Line *line, int pos, char c) {

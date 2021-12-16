@@ -1,5 +1,5 @@
-SRC = $(shell find -name "*.c")
-OBJ = $(shell echo $(SRC) | sed "s/src/work/g" | sed "s/\.c/.o/g")
+SRC = $(wildcard src/*.c)
+OBJ = $(subst .c,.o,$(subst src,work,$(SRC)))
 LIBS = $(shell ncurses6-config --libs)
 CC := gcc
 CFLAGS := -O2 -Wall -Wpedantic -Werror
@@ -14,7 +14,7 @@ work/%.o: src/%.c
 	$(CC) $(CFLAGS) $< -c -o $@
 
 install: build/$(OUT)
-	cp build/$(OUT) $(INSTALLDIR)
+	cp build/$(OUT) $(INSTALLDIR)/$(OUT)
 
 uninstall: $(INSTALLDIR)/$(OUT)
 	rm $(INSTALLDIR)/$(OUT)
